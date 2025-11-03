@@ -4,11 +4,17 @@ service: api-s3
 provider:
   name: aws
   runtime: python3.13	
-  # Default memory size for functions (default: 256MB)
   memorySize: 256
   timeout: 20
   iam:
     role: arn:aws:iam::216919536083:role/LabRole
+
+  # 🆕 Añadir stage para manejar dev/test/prod
+  stage: ${opt:stage, 'dev'}
+
+  # 🆕 Variable de entorno para saber en qué stage estamos
+  environment:
+    STAGE: ${sls:stage}
 
 functions:
   lista_buckets:
@@ -20,11 +26,42 @@ functions:
           method: get
           cors: true
           integration: lambda
+
   lista_objetos_bucket:
     handler: lista_objetos_bucket.lambda_handler
     events:
       - http:
           path: /s3/bucket/lista-objetos
+          method: post
+          cors: true
+          integration: lambda
+
+  # 🆕 NUEVA FUNCIÓN 1: crear bucket
+  crear_bucket:
+    handler: tarea_s3.crear_bucket
+    events:
+      - http:
+          path: /s3/bucket/crear
+          method: post
+          cors: true
+          integration: lambda
+
+  # 🆕 NUEVA FUNCIÓN 2: crear "directorio" (prefix)
+  crear_directorio:
+    handler: tarea_s3.crear_directorio
+    events:
+      - http:
+          path: /s3/directorio/crear
+          method: post
+          cors: true
+          integration: lambda
+
+  # 🆕 NUEVA FUNCIÓN 3: subir archivo
+  subir_archivo:
+    handler: tarea_s3.subir_archivo
+    events:
+      - http:
+          path: /s3/archivo/subir
           method: post
           cors: true
           integration: lambda
